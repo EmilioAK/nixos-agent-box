@@ -29,7 +29,9 @@ A personal x86_64 NixOS VM for running Codex, Claude Code, or both. The VM provi
    nixos-rebuild test --sudo --flake .#agent-box
    ```
 
-4. From a second SSH session, run `git twig --version` and `docker info`. If the rootless daemon needs to be started in your session, run `systemctl --user start docker.service`. Once access and tooling work, run `nixos-rebuild switch --sudo --flake .#agent-box` from the configuration checkout. Run `codex login` or open `claude` to sign in under your developer account.
+4. From a second SSH session, run `git twig --version` and `docker info`. If the rootless daemon needs to be started in your session, run `systemctl --user start docker.service`. Once access and tooling work, run `nixos-rebuild switch --sudo --flake .#agent-box` from the configuration checkout.
+
+   Sign in under your developer account. For Codex over SSH, enable device code login for your account, run `codex login --device-auth`, and open the displayed link on your computer. For Claude Code, run `claude` and follow the sign-in prompt. [Codex authentication](https://learn.chatgpt.com/docs/auth#login-on-headless-devices) · [Claude Code quickstart](https://code.claude.com/docs/en/quickstart)
 
 If your VM already uses a flake, add `github:EmilioAK/nixos-agent-box` as an input and import its `nixosModules.default` in your existing host. Set the options from [host/settings.nix](host/settings.nix) in that host and set `agentBox.configurationDirectory` to its checkout path. To retain an existing rootful Docker setup, set `agentBox.dockerMode = "rootful";`.
 
@@ -41,7 +43,7 @@ From a project's main checkout, create a sibling worktree and start an agent in 
 git twig new -b feat/my-task ../my-project-task HEAD
 cd ../my-project-task
 direnv allow
-tmux new-session -s my-task 'direnv exec . codex'
+tmux new-session -s my-task -c "$PWD" 'direnv exec . codex'
 ```
 
 Use `claude` in the tmux command for Claude Code. Detach with `Ctrl-b d` and reconnect with `tmux attach -t my-task`. After a reboot, reopen the same worktree and use `codex resume` or `claude --resume`.
