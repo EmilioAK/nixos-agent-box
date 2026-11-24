@@ -1,0 +1,31 @@
+name: Check
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: cachix/install-nix-action@382a9ed9481c7c1f94f68b72ef105b3417c73877 # v32.1.0
+      - name: Check both flakes
+        run: |
+          nix flake check --no-update-lock-file
+          nix flake check --no-update-lock-file ./examples/python-project
+      - name: Test Git Twig
+        run: |
+          twig="$(nix build .#git-twig --no-link --print-out-paths)"
+          export PATH="$twig/bin:$PATH"
+          git twig --version
+          git twig new -b twig-smoke "$RUNNER_TEMP/twig-smoke" HEAD
+          test "$(git -C "$RUNNER_TEMP/twig-smoke" branch --show-current)" = twig-smoke
+      - name: Validate example Compose stack
+        working-directory: examples/python-project
+        env:
+          POSTGRES_PASSWORD: example-only
+        run: docker compose config --quiet
